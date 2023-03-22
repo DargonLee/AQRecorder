@@ -5,13 +5,16 @@
 //  Created by Harlan on 2023/3/19.
 //
 
-#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface AQPlayer : NSObject
-/// normalizedValue
-@property (nonatomic, copy) void(^normalizedValueBlock)(CGFloat value);
+/// 当前播放的分贝值
+@property (nonatomic, copy) void (^normalizedValueBlock)(CGFloat value);
+/// 是否正在播放
+@property(nonatomic, assign, readonly) BOOL isPlaying;
+
 - (instancetype)initAudioFilePath:(NSString *_Nonnull)path;
 
 - (void)startPlayer;
@@ -19,6 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)pausePlayer;
 
 - (void)stopPlayer;
+
+- (CGFloat)getCurrentLevelMeter;
 
 @end
 

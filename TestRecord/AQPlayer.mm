@@ -31,7 +31,7 @@ static void HandleOutputBuffer (
                                 AudioQueueRef        inAQ,
                                 AudioQueueBufferRef  inBuffer
                                 ) {
-    NSLog(@"----->音频队列回调");
+    // NSLog(@"----->音频队列回调");
     AQPlayerState *pAqData = (AQPlayerState *) aqData;
     if (pAqData->mIsRunning == 0) {
         NSLog(@"------> mIsRunning error");
@@ -59,7 +59,8 @@ static void HandleOutputBuffer (
     UInt32 numPackets = pAqData->mNumPacketsToRead;
     
     void *const audioBuffer = inBuffer->mAudioData;
-    printf("======> data: %p\n", audioBuffer);
+//    NSData *pcmData = [NSData dataWithBytes:inBuffer->mAudioData length:inBuffer->mAudioDataByteSize];
+//    printf("======> data: %p\n", audioBuffer);
     OSStatus readStatus = AudioFileReadPacketData(pAqData->mAudioFile,
                                                   false,
                                                   &numBytesReadFromFile,
@@ -157,10 +158,14 @@ OSStatus SetMagicCookieForFileRead (AudioQueueRef inQueue, AudioFileID inFile)
 @end
 
 @implementation AQPlayer
+
 - (instancetype)initAudioFilePath:(NSString *_Nonnull)path
 {
     if (self = [super init]) {
         _audioFilePath = [path copy];
+        
+        [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryMultiRoute error:nil];
+        [[AVAudioSession sharedInstance] setActive:YES error:nil];
     }
     return self;
 }
@@ -264,6 +269,11 @@ OSStatus SetMagicCookieForFileRead (AudioQueueRef inQueue, AudioFileID inFile)
     return YES;
 }
 
+- (BOOL)isPlaying
+{
+    return aqData.mIsRunning == true ? YES : NO;
+}
+
 - (void)startPlayer
 {
     if (aqData.mIsRunning == false) {
@@ -313,31 +323,14 @@ OSStatus SetMagicCookieForFileRead (AudioQueueRef inQueue, AudioFileID inFile)
     free (aqData.mPacketDescs);
 }
 
-- (void)updateMeters
-{
-    CGFloat normalizedValue = [self _normalizedPowerLevelFromDecibels:[self getCurrentPower]];
-    if (self.normalizedValueBlock) {
-        self.normalizedValueBlock(normalizedValue);
-    }
-}
-
-- (CGFloat)_normalizedPowerLevelFromDecibels:(CGFloat)decibels
-{
-    if (decibels < -60.0f || decibels == 0.0f) {
-        return 0.0f;
-    }
-    return powf((powf(10.0f, 0.05f * decibels) - powf(10.0f, 0.05f * -60.0f)) * (1.0f / (1.0f - powf(10.0f, 0.05f * -60.0f))), 1.0f / 2.0f);
-}
-
-
-- (CGFloat)getCurrentPower
+- (CGFloat)getCurrentLevelMeter
 {
     UInt32 dataSize = sizeof(AudioQueueLevelMeterState) * aqData.mDataFormat.mChannelsPerFrame;
     AudioQueueLevelMeterState *levels = (AudioQueueLevelMeterState*)malloc(dataSize);
     OSStatus rc = AudioQueueGetProperty(aqData.mQueue, kAudioQueueProperty_CurrentLevelMeterDB, levels, &dataSize);
     if (rc)
     {
-        NSLog(@"NoiseLeveMeter>>takeSample - AudioQueueGetProperty(CurrentLevelMeter) returned %d", rc);
+        NSLog(@"NoiseLeveMeter>>takeSample %d", rc);
     }
     
     CGFloat channelAvg = 0;
@@ -347,7 +340,7 @@ OSStatus SetMagicCookieForFileRead (AudioQueueRef inQueue, AudioFileID inFile)
     }
     free(levels);
     
-    return channelAvg ;
+    return channelAvg;
 }
 
 @end

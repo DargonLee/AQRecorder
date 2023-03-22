@@ -127,8 +127,8 @@ OSStatus SetMagicCookieForFile (AudioQueueRef inQueue, AudioFileID inFile)
         [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryMultiRoute error:nil];
         [[AVAudioSession sharedInstance] setActive:YES error:nil];
         
-        _displaylink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateMeters)];
-        [_displaylink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+//        _displaylink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateMeters)];
+//        [_displaylink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
     }
     return self;
 }
@@ -282,11 +282,13 @@ OSStatus SetMagicCookieForFile (AudioQueueRef inQueue, AudioFileID inFile)
     
     AudioQueueDispose(aqData.mQueue, true);
     AudioFileClose(aqData.mAudioFile);
+    
+    [self cleanDisplayLink];
 }
 
 - (void)updateMeters
 {
-    CGFloat normalizedValue = [self _normalizedPowerLevelFromDecibels:[self getCurrentPower]];
+    CGFloat normalizedValue = [self _normalizedPowerLevelFromDecibels:[self getCurrentLevelMeter]];
     if (self.normalizedValueBlock) {
         self.normalizedValueBlock(normalizedValue);
     }
@@ -308,7 +310,7 @@ OSStatus SetMagicCookieForFile (AudioQueueRef inQueue, AudioFileID inFile)
     }
 }
 
-- (CGFloat)getCurrentPower
+- (CGFloat)getCurrentLevelMeter
 {
     UInt32 dataSize = sizeof(AudioQueueLevelMeterState) * aqData.mDataFormat.mChannelsPerFrame;
     AudioQueueLevelMeterState *levels = (AudioQueueLevelMeterState*)malloc(dataSize);

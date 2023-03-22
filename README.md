@@ -7,9 +7,8 @@
 
 ```objective-c
 NSString *filePath = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%.0f.%@", [NSDate timeIntervalSinceReferenceDate] * 1000.0, @"caf"]];
-    NSLog(@"----- %@", filePath);
-    self.recorder = [[AQRecorder alloc] initAudioFilePath:filePath audioFormatType:AudioFormatLinearPCM];
-
+NSLog(@"----- %@", filePath);
+self.recorder = [[AQRecorder alloc] initAudioFilePath:filePath audioFormatType:AudioFormatLinearPCM];
 
 // 开始录制
 [self.recorder startRecord];

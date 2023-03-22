@@ -5,7 +5,7 @@
 //  Created by Harlan on 2023/3/18.
 //
 
-#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -16,10 +16,10 @@ typedef NS_ENUM(NSInteger, AudioFormatType)
 };
 
 @interface AQRecorder : NSObject
-
-/// normalizedValue
+/// 当前录音的分贝值
 @property (nonatomic, copy) void(^normalizedValueBlock)(CGFloat value);
-@property(nonatomic, assign) BOOL isRecording;
+/// 是否正在录制
+@property(nonatomic, assign, readonly) BOOL isRecording;
 
 - (instancetype)initAudioFilePath:(NSString *_Nonnull)path audioFormatType:(AudioFormatType)type;
 
@@ -28,6 +28,8 @@ typedef NS_ENUM(NSInteger, AudioFormatType)
 - (void)pauseRecord;
 
 - (void)stopRecord;
+
+- (CGFloat)getCurrentLevelMeter;
 
 @end
 

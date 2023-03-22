@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DC01E8F129CB47F6008AB3DD /* SCSiriWaveformView.m in Sources */ = {isa = PBXBuildFile; fileRef = DC01E8EF29CB47F6008AB3DD /* SCSiriWaveformView.m */; };
 		DCB5E3CF29C57FCD00AED21E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCB5E3CE29C57FCD00AED21E /* AppDelegate.m */; };
 		DCB5E3D229C57FCD00AED21E /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCB5E3D129C57FCD00AED21E /* SceneDelegate.m */; };
 		DCB5E3D529C57FCD00AED21E /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = DCB5E3D429C57FCD00AED21E /* ViewController.m */; };
@@ -21,6 +22,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		DC01E8EF29CB47F6008AB3DD /* SCSiriWaveformView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SCSiriWaveformView.m; sourceTree = "<group>"; };
+		DC01E8F029CB47F6008AB3DD /* SCSiriWaveformView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SCSiriWaveformView.h; sourceTree = "<group>"; };
 		DCB5E3CA29C57FCD00AED21E /* TestRecord.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TestRecord.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DCB5E3CD29C57FCD00AED21E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		DCB5E3CE29C57FCD00AED21E /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -54,6 +57,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		DC01E8EE29CB47F6008AB3DD /* SCSiriWaveformView */ = {
+			isa = PBXGroup;
+			children = (
+				DC01E8F029CB47F6008AB3DD /* SCSiriWaveformView.h */,
+				DC01E8EF29CB47F6008AB3DD /* SCSiriWaveformView.m */,
+			);
+			path = SCSiriWaveformView;
+			sourceTree = "<group>";
+		};
 		DCB5E3C129C57FCD00AED21E = {
 			isa = PBXGroup;
 			children = (
@@ -84,6 +96,7 @@
 				DCB5E3E729C580B900AED21E /* AQRecorder.mm */,
 				DCB5E3EE29C6F83500AED21E /* AQPlayer.h */,
 				DCB5E3EF29C6F83500AED21E /* AQPlayer.mm */,
+				DC01E8EE29CB47F6008AB3DD /* SCSiriWaveformView */,
 				DCB5E3D629C57FCD00AED21E /* Main.storyboard */,
 				DCB5E3D929C57FCF00AED21E /* Assets.xcassets */,
 				DCB5E3DB29C57FCF00AED21E /* LaunchScreen.storyboard */,
@@ -177,6 +190,7 @@
 				DCB5E3CF29C57FCD00AED21E /* AppDelegate.m in Sources */,
 				DCB5E3E029C57FCF00AED21E /* main.m in Sources */,
 				DCB5E3F029C6F83600AED21E /* AQPlayer.mm in Sources */,
+				DC01E8F129CB47F6008AB3DD /* SCSiriWaveformView.m in Sources */,
 				DCB5E3D229C57FCD00AED21E /* SceneDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

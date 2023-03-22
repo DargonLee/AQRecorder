@@ -7,7 +7,8 @@
 
 #import "ViewController.h"
 #import "AQRecorder.h"
-#import "AQPlayer.h""
+#import "AQPlayer.h"
+#import "SCSiriWaveformView.h"
 #import <mach/mach_time.h>
 
 double MachTimeToSecs(uint64_t time)
@@ -35,8 +36,10 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
 
 @interface ViewController ()
 
+@property (weak, nonatomic) IBOutlet SCSiriWaveformView *waveView;
 @property(nonatomic, strong)AQRecorder *recorder;
 @property(nonatomic, strong)AQPlayer *player;
+@property (nonatomic, strong) CADisplayLink *displaylink;
 
 @end
 
@@ -45,16 +48,31 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
     kCodeTimeBegin;
     // Do any additional setup after loading the view.
     NSString *filePath = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%.0f.%@", [NSDate timeIntervalSinceReferenceDate] * 1000.0, @"caf"]];
     NSLog(@"----- %@", filePath);
+    // 录音
     self.recorder = [[AQRecorder alloc] initAudioFilePath:filePath audioFormatType:AudioFormatLinearPCM];
-    NSString *filePath1 = [NSTemporaryDirectory() stringByAppendingPathComponent:@"700911886073.caf"];
+    
+    // 播放
+    NSString *filePath1 = [NSTemporaryDirectory() stringByAppendingPathComponent:@"701100889296.caf"];
     self.player = [[AQPlayer alloc] initAudioFilePath:filePath1];
+    
+    // 定时器读取音频的分贝值
+    _displaylink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateMeters)];
+    _displaylink.preferredFramesPerSecond = 1;
+    [_displaylink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+    
+    // 分贝图
+    [self.waveView setWaveColor:[UIColor redColor]];
+    [self.waveView setPrimaryWaveLineWidth:3.0f];
+    [self.waveView setSecondaryWaveLineWidth:1.0];
     
     kCodeTimeEnd;
 }
+
 - (IBAction)begin:(id)sender
 {
     [self.recorder startRecord];
@@ -82,5 +100,23 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
 }
 
 
+- (void)updateMeters
+{
+//    CGFloat metersValue = [self.player getCurrentLevelMeter];
+    CGFloat metersValue = [self.recorder getCurrentLevelMeter];
+//    NSLog(@"metersValue -> %f", metersValue);
+    CGFloat normalizedValue = [self normalizedPowerLevelFromDecibels:metersValue];
+    NSLog(@"normalizedValue -> %f", normalizedValue);
+    [self.waveView updateWithLevel:normalizedValue];
+}
+
+- (CGFloat)normalizedPowerLevelFromDecibels:(CGFloat)decibels
+{
+    if (decibels < -60.0f || decibels == 0.0f) {
+        return 0.0f;
+    }
+    CGFloat value = powf((powf(10.0f, 0.05f * decibels) - powf(10.0f, 0.05f * -60.0f)) * (1.0f / (1.0f - powf(10.0f, 0.05f * -60.0f))), 1.0f / 2.0f);
+    return value;
+}
 
 @end

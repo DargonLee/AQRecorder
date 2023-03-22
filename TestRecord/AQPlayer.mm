@@ -313,4 +313,41 @@ OSStatus SetMagicCookieForFileRead (AudioQueueRef inQueue, AudioFileID inFile)
     free (aqData.mPacketDescs);
 }
 
+- (void)updateMeters
+{
+    CGFloat normalizedValue = [self _normalizedPowerLevelFromDecibels:[self getCurrentPower]];
+    if (self.normalizedValueBlock) {
+        self.normalizedValueBlock(normalizedValue);
+    }
+}
+
+- (CGFloat)_normalizedPowerLevelFromDecibels:(CGFloat)decibels
+{
+    if (decibels < -60.0f || decibels == 0.0f) {
+        return 0.0f;
+    }
+    return powf((powf(10.0f, 0.05f * decibels) - powf(10.0f, 0.05f * -60.0f)) * (1.0f / (1.0f - powf(10.0f, 0.05f * -60.0f))), 1.0f / 2.0f);
+}
+
+
+- (CGFloat)getCurrentPower
+{
+    UInt32 dataSize = sizeof(AudioQueueLevelMeterState) * aqData.mDataFormat.mChannelsPerFrame;
+    AudioQueueLevelMeterState *levels = (AudioQueueLevelMeterState*)malloc(dataSize);
+    OSStatus rc = AudioQueueGetProperty(aqData.mQueue, kAudioQueueProperty_CurrentLevelMeterDB, levels, &dataSize);
+    if (rc)
+    {
+        NSLog(@"NoiseLeveMeter>>takeSample - AudioQueueGetProperty(CurrentLevelMeter) returned %d", rc);
+    }
+    
+    CGFloat channelAvg = 0;
+    for (int i = 0; i < dataSize; i++)
+    {
+        channelAvg += levels[i].mAveragePower;
+    }
+    free(levels);
+    
+    return channelAvg ;
+}
+
 @end

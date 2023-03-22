@@ -10,7 +10,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface AQPlayer : NSObject
-
+/// normalizedValue
+@property (nonatomic, copy) void(^normalizedValueBlock)(CGFloat value);
 - (instancetype)initAudioFilePath:(NSString *_Nonnull)path;
 
 - (void)startPlayer;

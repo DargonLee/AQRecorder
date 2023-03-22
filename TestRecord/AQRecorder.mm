@@ -46,6 +46,7 @@ static void HandleInputBuffer (
     
     // 3、将音频队列缓冲区写入磁盘
     // 要写入音频文件的新音频数据
+    // NSData *pcmData = [NSData dataWithBytes:inBuffer->mAudioData length:inBuffer->mAudioDataByteSize];
     void *const audioBuffer = inBuffer->mAudioData;
     printf("======> data: %p\n", audioBuffer);
     OSStatus writeStatus = AudioFileWritePackets(pAqData->mAudioFile,
@@ -111,6 +112,7 @@ OSStatus SetMagicCookieForFile (AudioQueueRef inQueue, AudioFileID inFile)
     NSString *_audioFilePath;
     BOOL _pauseing;
 }
+@property (nonatomic, strong) CADisplayLink *displaylink;
 @end
 
 @implementation AQRecorder
@@ -122,8 +124,11 @@ OSStatus SetMagicCookieForFile (AudioQueueRef inQueue, AudioFileID inFile)
         
         [self setAudioFormatType:type sampleRate:8000.0 channels:1 bitsPerChannel:16];
         
-        [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryRecord error:nil];
+        [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryMultiRoute error:nil];
         [[AVAudioSession sharedInstance] setActive:YES error:nil];
+        
+        _displaylink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateMeters)];
+        [_displaylink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
     }
     return self;
 }
@@ -277,6 +282,50 @@ OSStatus SetMagicCookieForFile (AudioQueueRef inQueue, AudioFileID inFile)
     
     AudioQueueDispose(aqData.mQueue, true);
     AudioFileClose(aqData.mAudioFile);
+}
+
+- (void)updateMeters
+{
+    CGFloat normalizedValue = [self _normalizedPowerLevelFromDecibels:[self getCurrentPower]];
+    if (self.normalizedValueBlock) {
+        self.normalizedValueBlock(normalizedValue);
+    }
+}
+
+- (CGFloat)_normalizedPowerLevelFromDecibels:(CGFloat)decibels
+{
+    if (decibels < -60.0f || decibels == 0.0f) {
+        return 0.0f;
+    }
+    return powf((powf(10.0f, 0.05f * decibels) - powf(10.0f, 0.05f * -60.0f)) * (1.0f / (1.0f - powf(10.0f, 0.05f * -60.0f))), 1.0f / 2.0f);
+}
+
+- (void)cleanDisplayLink
+{
+    if (self.displaylink) {
+        [self.displaylink invalidate];
+        self.displaylink = nil;
+    }
+}
+
+- (CGFloat)getCurrentPower
+{
+    UInt32 dataSize = sizeof(AudioQueueLevelMeterState) * aqData.mDataFormat.mChannelsPerFrame;
+    AudioQueueLevelMeterState *levels = (AudioQueueLevelMeterState*)malloc(dataSize);
+    OSStatus rc = AudioQueueGetProperty(aqData.mQueue, kAudioQueueProperty_CurrentLevelMeterDB, levels, &dataSize);
+    if (rc)
+    {
+        NSLog(@"NoiseLeveMeter>>takeSample - AudioQueueGetProperty(CurrentLevelMeter) returned %d", rc);
+    }
+    
+    CGFloat channelAvg = 0;
+    for (int i = 0; i < dataSize; i++)
+    {
+        channelAvg += levels[i].mAveragePower;
+    }
+    free(levels);
+    
+    return channelAvg ;
 }
 
 - (void)dealloc

@@ -17,6 +17,8 @@ typedef NS_ENUM(NSInteger, AudioFormatType)
 
 @interface AQRecorder : NSObject
 
+/// normalizedValue
+@property (nonatomic, copy) void(^normalizedValueBlock)(CGFloat value);
 @property(nonatomic, assign) BOOL isRecording;
 
 - (instancetype)initAudioFilePath:(NSString *_Nonnull)path audioFormatType:(AudioFormatType)type;

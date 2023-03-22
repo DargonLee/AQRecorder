@@ -55,25 +55,25 @@ static void HandleOutputBuffer (
     //    );
     
     // 3、从文件读入音频队列缓冲区
-    UInt32 numBytesReadFromFile = 0;
+    UInt32 numBytesReadFromFile = 2048;
     UInt32 numPackets = pAqData->mNumPacketsToRead;
     
     void *const audioBuffer = inBuffer->mAudioData;
     printf("======> data: %p\n", audioBuffer);
-//    OSStatus readStatus = AudioFileReadPacketData(pAqData->mAudioFile,
-//                                                  false,
-//                                                  &numBytesReadFromFile,
-//                                                  pAqData->mPacketDescs,
-//                                                  pAqData->mCurrentPacket,
-//                                                  &numPackets,
-//                                                  audioBuffer);
-    OSStatus readStatus = AudioFileReadPackets (pAqData->mAudioFile,
-                                                false,
-                                                &numBytesReadFromFile,
-                                                pAqData->mPacketDescs,
-                                                pAqData->mCurrentPacket,
-                                                &numPackets,
-                                                audioBuffer);
+    OSStatus readStatus = AudioFileReadPacketData(pAqData->mAudioFile,
+                                                  false,
+                                                  &numBytesReadFromFile,
+                                                  pAqData->mPacketDescs,
+                                                  pAqData->mCurrentPacket,
+                                                  &numPackets,
+                                                  audioBuffer);
+//    OSStatus readStatus = AudioFileReadPackets (pAqData->mAudioFile,
+//                                                false,
+//                                                &numBytesReadFromFile,
+//                                                pAqData->mPacketDescs,
+//                                                pAqData->mCurrentPacket,
+//                                                &numPackets,
+//                                                audioBuffer);
     if (readStatus != noErr) {
         NSLog(@"------> readStatus error");
         return;
@@ -266,10 +266,12 @@ OSStatus SetMagicCookieForFileRead (AudioQueueRef inQueue, AudioFileID inFile)
 
 - (void)startPlayer
 {
-    aqData.mIsRunning = true;
-    if (![self prepareToPlay]) {
-        NSLog(@"播放失败");
-        return;
+    if (aqData.mIsRunning == false) {
+        aqData.mIsRunning = true;
+        if (![self prepareToPlay]) {
+            NSLog(@"播放失败");
+            return;
+        }
     }
     AudioQueueStart (
         aqData.mQueue,

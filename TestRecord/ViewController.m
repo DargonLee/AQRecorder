@@ -58,7 +58,7 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
     NSString *filePath = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%.0f.%@", [NSDate timeIntervalSinceReferenceDate] * 1000.0, @"caf"]];
     NSLog(@"----- %@", filePath);
     // 录音
-    self.recorder = [[AQRecorder alloc] initAudioFilePath:filePath audioFormatType:AudioFormatMPEG4AAC];
+    self.recorder = [[AQRecorder alloc] initAudioFilePath:filePath audioFormatType:AudioFormatLinearPCM];
     
     // 播放
     NSString *filePath1 = [NSTemporaryDirectory() stringByAppendingPathComponent:@"701100889296.caf"];

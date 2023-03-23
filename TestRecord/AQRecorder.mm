@@ -157,6 +157,7 @@ OSStatus SetMagicCookieForFile (AudioQueueRef inQueue, AudioFileID inFile)
     if (audioFormatType == AudioFormatLinearPCM) {
         aqData.mDataFormat.mFormatID = kAudioFormatLinearPCM;
         aqData.mDataFormat.mBitsPerChannel = bitsPerChannel > 0 ? bitsPerChannel : kDefaultBitsPerChannel;
+        aqData.mDataFormat.mBytesPerPacket =
         aqData.mDataFormat.mBytesPerFrame = (aqData.mDataFormat.mBitsPerChannel / 8) * aqData.mDataFormat.mChannelsPerFrame;
         aqData.mDataFormat.mFramesPerPacket = 1;
         aqData.mDataFormat.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked;

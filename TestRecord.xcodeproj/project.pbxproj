@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1897A04D29CC267A00B4AEC4 /* DBAudioMicrophone.m in Sources */ = {isa = PBXBuildFile; fileRef = 1897A04229CC267A00B4AEC4 /* DBAudioMicrophone.m */; };
+		1897A04E29CC267A00B4AEC4 /* DBEngraverAudioMicrophone.m in Sources */ = {isa = PBXBuildFile; fileRef = 1897A04329CC267A00B4AEC4 /* DBEngraverAudioMicrophone.m */; };
+		1897A04F29CC267A00B4AEC4 /* DSAQPool.m in Sources */ = {isa = PBXBuildFile; fileRef = 1897A04829CC267A00B4AEC4 /* DSAQPool.m */; };
+		1897A05029CC267A00B4AEC4 /* DBSynthesisPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1897A04929CC267A00B4AEC4 /* DBSynthesisPlayer.m */; };
+		1897A05129CC267A00B4AEC4 /* DBPCMDataPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1897A04A29CC267A00B4AEC4 /* DBPCMDataPlayer.m */; };
+		1897A05229CC267A00B4AEC4 /* DBRecordPCMDataPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1897A04B29CC267A00B4AEC4 /* DBRecordPCMDataPlayer.m */; };
+		1897A05529CC2D8900B4AEC4 /* AQRecorderPro.m in Sources */ = {isa = PBXBuildFile; fileRef = 1897A05429CC2D8900B4AEC4 /* AQRecorderPro.m */; };
 		DC01E8F129CB47F6008AB3DD /* SCSiriWaveformView.m in Sources */ = {isa = PBXBuildFile; fileRef = DC01E8EF29CB47F6008AB3DD /* SCSiriWaveformView.m */; };
 		DCB5E3CF29C57FCD00AED21E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCB5E3CE29C57FCD00AED21E /* AppDelegate.m */; };
 		DCB5E3D229C57FCD00AED21E /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCB5E3D129C57FCD00AED21E /* SceneDelegate.m */; };
@@ -22,6 +29,20 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1897A04029CC267A00B4AEC4 /* DBEngraverAudioMicrophone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DBEngraverAudioMicrophone.h; sourceTree = "<group>"; };
+		1897A04129CC267A00B4AEC4 /* DBAudioMicrophone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DBAudioMicrophone.h; sourceTree = "<group>"; };
+		1897A04229CC267A00B4AEC4 /* DBAudioMicrophone.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DBAudioMicrophone.m; sourceTree = "<group>"; };
+		1897A04329CC267A00B4AEC4 /* DBEngraverAudioMicrophone.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DBEngraverAudioMicrophone.m; sourceTree = "<group>"; };
+		1897A04529CC267A00B4AEC4 /* DBSynthesisPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DBSynthesisPlayer.h; sourceTree = "<group>"; };
+		1897A04629CC267A00B4AEC4 /* DBPCMDataPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DBPCMDataPlayer.h; sourceTree = "<group>"; };
+		1897A04729CC267A00B4AEC4 /* DBRecordPCMDataPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DBRecordPCMDataPlayer.h; sourceTree = "<group>"; };
+		1897A04829CC267A00B4AEC4 /* DSAQPool.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSAQPool.m; sourceTree = "<group>"; };
+		1897A04929CC267A00B4AEC4 /* DBSynthesisPlayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DBSynthesisPlayer.m; sourceTree = "<group>"; };
+		1897A04A29CC267A00B4AEC4 /* DBPCMDataPlayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DBPCMDataPlayer.m; sourceTree = "<group>"; };
+		1897A04B29CC267A00B4AEC4 /* DBRecordPCMDataPlayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DBRecordPCMDataPlayer.m; sourceTree = "<group>"; };
+		1897A04C29CC267A00B4AEC4 /* DSAQPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSAQPool.h; sourceTree = "<group>"; };
+		1897A05329CC2D8900B4AEC4 /* AQRecorderPro.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AQRecorderPro.h; sourceTree = "<group>"; };
+		1897A05429CC2D8900B4AEC4 /* AQRecorderPro.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AQRecorderPro.m; sourceTree = "<group>"; };
 		DC01E8EF29CB47F6008AB3DD /* SCSiriWaveformView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SCSiriWaveformView.m; sourceTree = "<group>"; };
 		DC01E8F029CB47F6008AB3DD /* SCSiriWaveformView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SCSiriWaveformView.h; sourceTree = "<group>"; };
 		DCB5E3CA29C57FCD00AED21E /* TestRecord.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TestRecord.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -57,6 +78,32 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1897A03F29CC267A00B4AEC4 /* DBMicrophone */ = {
+			isa = PBXGroup;
+			children = (
+				1897A04029CC267A00B4AEC4 /* DBEngraverAudioMicrophone.h */,
+				1897A04329CC267A00B4AEC4 /* DBEngraverAudioMicrophone.m */,
+				1897A04129CC267A00B4AEC4 /* DBAudioMicrophone.h */,
+				1897A04229CC267A00B4AEC4 /* DBAudioMicrophone.m */,
+			);
+			path = DBMicrophone;
+			sourceTree = "<group>";
+		};
+		1897A04429CC267A00B4AEC4 /* DBPlayer */ = {
+			isa = PBXGroup;
+			children = (
+				1897A04529CC267A00B4AEC4 /* DBSynthesisPlayer.h */,
+				1897A04629CC267A00B4AEC4 /* DBPCMDataPlayer.h */,
+				1897A04729CC267A00B4AEC4 /* DBRecordPCMDataPlayer.h */,
+				1897A04829CC267A00B4AEC4 /* DSAQPool.m */,
+				1897A04929CC267A00B4AEC4 /* DBSynthesisPlayer.m */,
+				1897A04A29CC267A00B4AEC4 /* DBPCMDataPlayer.m */,
+				1897A04B29CC267A00B4AEC4 /* DBRecordPCMDataPlayer.m */,
+				1897A04C29CC267A00B4AEC4 /* DSAQPool.h */,
+			);
+			path = DBPlayer;
+			sourceTree = "<group>";
+		};
 		DC01E8EE29CB47F6008AB3DD /* SCSiriWaveformView */ = {
 			isa = PBXGroup;
 			children = (
@@ -92,8 +139,12 @@
 				DCB5E3D129C57FCD00AED21E /* SceneDelegate.m */,
 				DCB5E3D329C57FCD00AED21E /* ViewController.h */,
 				DCB5E3D429C57FCD00AED21E /* ViewController.m */,
+				1897A03F29CC267A00B4AEC4 /* DBMicrophone */,
+				1897A04429CC267A00B4AEC4 /* DBPlayer */,
 				DCB5E3E629C580B900AED21E /* AQRecorder.h */,
 				DCB5E3E729C580B900AED21E /* AQRecorder.mm */,
+				1897A05329CC2D8900B4AEC4 /* AQRecorderPro.h */,
+				1897A05429CC2D8900B4AEC4 /* AQRecorderPro.m */,
 				DCB5E3EE29C6F83500AED21E /* AQPlayer.h */,
 				DCB5E3EF29C6F83500AED21E /* AQPlayer.mm */,
 				DC01E8EE29CB47F6008AB3DD /* SCSiriWaveformView */,
@@ -190,7 +241,14 @@
 				DCB5E3CF29C57FCD00AED21E /* AppDelegate.m in Sources */,
 				DCB5E3E029C57FCF00AED21E /* main.m in Sources */,
 				DCB5E3F029C6F83600AED21E /* AQPlayer.mm in Sources */,
+				1897A04F29CC267A00B4AEC4 /* DSAQPool.m in Sources */,
+				1897A05029CC267A00B4AEC4 /* DBSynthesisPlayer.m in Sources */,
+				1897A05529CC2D8900B4AEC4 /* AQRecorderPro.m in Sources */,
+				1897A04E29CC267A00B4AEC4 /* DBEngraverAudioMicrophone.m in Sources */,
+				1897A04D29CC267A00B4AEC4 /* DBAudioMicrophone.m in Sources */,
+				1897A05129CC267A00B4AEC4 /* DBPCMDataPlayer.m in Sources */,
 				DC01E8F129CB47F6008AB3DD /* SCSiriWaveformView.m in Sources */,
+				1897A05229CC267A00B4AEC4 /* DBRecordPCMDataPlayer.m in Sources */,
 				DCB5E3D229C57FCD00AED21E /* SceneDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

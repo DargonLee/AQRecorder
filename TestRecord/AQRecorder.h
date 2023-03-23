@@ -23,6 +23,8 @@ typedef NS_ENUM(NSInteger, AudioFormatType)
 
 - (instancetype)initAudioFilePath:(NSString *_Nonnull)path audioFormatType:(AudioFormatType)type;
 
+- (void)setAudioFormatType:(AudioFormatType)audioFormatType sampleRate:(Float64)sampleRate channels:(UInt32)channels bitsPerChannel:(UInt32)bitsPerChannel;
+
 - (void)startRecord;
 
 - (void)pauseRecord;
@@ -30,6 +32,8 @@ typedef NS_ENUM(NSInteger, AudioFormatType)
 - (void)stopRecord;
 
 - (CGFloat)getCurrentLevelMeter;
+
+- (float)getCurrentAudioPower;
 
 @end
 

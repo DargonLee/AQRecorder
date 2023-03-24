@@ -7,6 +7,7 @@
 
 #import "AQRecorderPro.h"
 #import <AudioToolbox/AudioToolbox.h>
+#import <CoreAudio/CoreAudioTypes.h>
 #import <AVFoundation/AVFoundation.h>
 
 #define kDefaultSampleRate 8000.0
@@ -23,26 +24,58 @@ typedef struct AQRecorderStatePro {
     UInt32                       bufferByteSize;
     SInt64                       mCurrentPacket;
     bool                         mIsRunning;
+    UInt32                       mEnableLevelMetering;
     double                       mLevelMeter;
 } AQRecorderStatePro;
 
-void AudioAQInputCallbackPro(void * __nullable               inUserData,
+void AudioAQInputCallbackPro(void * __nullable            inUserData,
                           AudioQueueRef                   inAQ,
                           AudioQueueBufferRef             inBuffer,
                           const AudioTimeStamp *          inStartTime,
                           UInt32                          inNumberPacket,
                           const AudioStreamPacketDescription * __nullable inPacketDescs);
 
+// 录制音频队列缓冲区大小
+void SetDeriveBufferSize(AudioQueueRef audioQueue,
+                         AudioStreamBasicDescription ASBDescription,
+                         Float64  seconds,
+                         UInt32   *outBufferSize)
+{
+    static const int maxBufferSize = 0x50000;
+    
+    int maxPacketSize = ASBDescription.mBytesPerPacket;
+    if (maxPacketSize == 0) {
+        UInt32 maxVBRPacketSize = sizeof(maxPacketSize);
+        AudioQueueGetProperty(audioQueue, kAudioQueueProperty_MaximumOutputPacketSize, &maxPacketSize, &maxVBRPacketSize);
+    }
+    Float64 numBytesForTime = ASBDescription.mSampleRate * maxPacketSize * seconds;
+    *outBufferSize = (UInt32)(numBytesForTime < maxBufferSize ? numBytesForTime : maxBufferSize);
+}
+
 @interface AQRecorderPro()
 {
     AQRecorderStatePro aqData;
     NSString *_audioFilePath;
 }
-@property (nonatomic, assign) BOOL isBufferAlloc;
 @property(nonatomic,strong) NSOutputStream *stream;
+
 @end
 
 @implementation AQRecorderPro
+
+- (void)dealloc
+{
+    [self freeAudioBuffers];
+    AudioQueueDispose(aqData.mQueue, true);
+}
+- (void)freeAudioBuffers
+{
+    for(int i = 0; i < kNumberBuffers; i++)
+    {
+        OSStatus result = AudioQueueFreeBuffer(aqData.mQueue, aqData.mBuffers[i]);
+        NSLog(@"AudioQueueFreeBuffer i = %d,result = %d", i, result);
+    }
+}
 
 - (instancetype)initAudioFilePath:(NSString *_Nonnull)path
 {
@@ -66,17 +99,12 @@ void AudioAQInputCallbackPro(void * __nullable               inUserData,
     
     aqData.mDataFormat.mFormatID = kAudioFormatLinearPCM;
     aqData.mDataFormat.mBitsPerChannel = bitsPerChannel > 0 ? bitsPerChannel : kDefaultBitsPerChannel;
+    aqData.mDataFormat.mBytesPerPacket =
     aqData.mDataFormat.mBytesPerFrame = (aqData.mDataFormat.mBitsPerChannel / 8) * aqData.mDataFormat.mChannelsPerFrame;
     aqData.mDataFormat.mFramesPerPacket = 1;
     aqData.mDataFormat.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked;
 }
-/*
- AudioQueueRef                   inAQ,
- AudioQueueBufferRef             inBuffer,
- const AudioTimeStamp *          inStartTime,
- UInt32                          inNumberPacketDescriptions,
- const AudioStreamPacketDescription * __nullable inPacketDescs
- */
+
 - (void)processAudioQueueRef:(AudioQueueRef)inAudioQueue audioBuffer:(AudioQueueBufferRef)inBuffer audioTimeStamp:(const AudioTimeStamp *)inStartTime inNumberPacketDescriptions:(UInt32)inNumPackets audioPacketDesce:(const AudioStreamPacketDescription *)inPacketDesc
 
 
@@ -91,20 +119,21 @@ void AudioAQInputCallbackPro(void * __nullable               inUserData,
     [self getVoiceVolume:bufferData];
     
     [self.stream write:bufferData.bytes maxLength:bufferData.length];
-    
 //    void *const audioBuffer = inBuffer->mAudioData;
-    const void *audioBuffer = bufferData.bytes;
-    printf("======> data: %p\n", audioBuffer);
-    OSStatus writeStatus = AudioFileWritePackets(aqData.mAudioFile,
-                                                 false,
-                                                 inBuffer->mAudioDataByteSize,
-                                                 inPacketDesc,
-                                                 aqData.mCurrentPacket,
-                                                 &inNumPackets,
-                                                 audioBuffer);
+//    printf("======> data: %p\n", audioBuffer);
+//    OSStatus writeStatus = AudioFileWritePackets(aqData.mAudioFile,
+//                                                 false,
+//                                                 inBuffer->mAudioDataByteSize,
+//                                                 inPacketDesc,
+//                                                 aqData.mCurrentPacket,
+//                                                 &inNumPackets,
+//                                                 audioBuffer);
+//    if (writeStatus == noErr) {
+//        aqData.mCurrentPacket += inNumPackets;
+//    }
     
-    if (writeStatus == noErr) {
-        aqData.mCurrentPacket += inNumPackets;
+    if (aqData.mIsRunning == false) {
+        return;
     }
     
     AudioQueueEnqueueBuffer(inAudioQueue, inBuffer, 0, NULL);
@@ -138,11 +167,22 @@ void AudioAQInputCallbackPro(void * __nullable               inUserData,
                           kAudioQueueProperty_StreamDescription,
                           &aqData.mDataFormat,
                           &dataFormatSize);
-    return [self allocAudioBuffers];
-}
+    
+    // 设置缓冲区大小
+    SetDeriveBufferSize(aqData.mQueue,
+                     aqData.mDataFormat,
+                     0.5,
+                     &aqData.bufferByteSize);
 
-- (BOOL)allocAudioBuffers
-{
+    // 开启Metering
+    UInt32 size = sizeof(aqData.mEnableLevelMetering);
+    OSStatus status = AudioQueueSetProperty(aqData.mQueue, kAudioQueueProperty_EnableLevelMetering, &aqData.mEnableLevelMetering, size);
+    if (status != noErr) {
+        NSLog(@"开启Metering失败");
+    }
+    
+    // 创建音频队列缓冲区
+    aqData.mCurrentPacket = 0;
     for (int i = 0; i < kNumberBuffers; ++i)
     {
         OSStatus allocBufferStatus = AudioQueueAllocateBuffer(aqData.mQueue,
@@ -166,14 +206,15 @@ void AudioAQInputCallbackPro(void * __nullable               inUserData,
     }
     return YES;
 }
-- (void)freeAudioBuffers
+
+- (void)setMeteringEnabled:(BOOL)meteringEnabled
 {
-    for(int i = 0; i < kNumberBuffers; i++)
-    {
-        OSStatus result = AudioQueueFreeBuffer(aqData.mQueue, aqData.mBuffers[i]);
-        NSLog(@"AudioQueueFreeBuffer i = %d,result = %d", i, result);
-    }
-    AudioQueueDispose(aqData.mQueue, YES);
+    aqData.mEnableLevelMetering = meteringEnabled == YES ? 1 : 0;
+}
+- (BOOL)isMeteringEnabled
+{
+    BOOL result = aqData.mEnableLevelMetering == 1 ? YES : NO;
+    return result;
 }
 
 - (BOOL)isRecording
@@ -184,6 +225,11 @@ void AudioAQInputCallbackPro(void * __nullable               inUserData,
 - (void)startRecord
 {
     // 开始录音
+    if(![self prepareToRecord])
+    {
+        NSLog(@"准备录音失败");
+        return;
+    }
     [self.stream open];
     OSStatus startStatus = AudioQueueStart(aqData.mQueue, NULL);
     if (startStatus != noErr)
@@ -191,19 +237,17 @@ void AudioAQInputCallbackPro(void * __nullable               inUserData,
         NSLog(@"开始录音失败：%d", startStatus);
         return;
     }
-    NSLog(@"开始录音---->%d<----", startStatus);
+    NSLog(@"开始录音");
     aqData.mIsRunning = true;
 }
 
 - (void)stopRecord
 {
     aqData.mIsRunning = false;
-    [self freeAudioBuffers];
     [self.stream close];
     self.stream = nil;
     
     AudioQueueStop(aqData.mQueue, true);
-    AudioQueueDispose(aqData.mQueue, true);
     AudioFileClose(aqData.mAudioFile);
 }
 
@@ -214,13 +258,14 @@ void AudioAQInputCallbackPro(void * __nullable               inUserData,
 
 - (void)getVoiceVolume:(NSData *)pcmData
 {
-    if(pcmData ==nil)
+    if(pcmData == nil)
     {
         return ;
     }
     long pcmAllLenght = 0;
     short butterByte[pcmData.length/2];
     memcpy(butterByte, pcmData.bytes, pcmData.length);
+    
     // 将 buffer 内容取出，进行平方和运算
     for(int i = 0; i < pcmData.length / 2; i++)
     {
@@ -229,76 +274,28 @@ void AudioAQInputCallbackPro(void * __nullable               inUserData,
     double mean = pcmAllLenght / (double)pcmData.length;
     double volume = 10 * log10(mean);
     NSLog(@"分贝大小 %@", @(volume));
-    aqData.mLevelMeter = volume;
+    
+    !self.currentLevelMeterDBValueBlock ? nil : self.currentLevelMeterDBValueBlock(volume);
 }
 
-- (void)writeWaveHead:(NSData *)audioData
+- (float)peakPowerMeter
 {
-    long sampleRate = aqData.mDataFormat.mSampleRate;
-    Byte waveHead[44];
-    waveHead[0] = 'R';
-    waveHead[1] = 'I';
-    waveHead[2] = 'F';
-    waveHead[3] = 'F';
-    
-    long totalDatalength = [audioData length] + 44;
-    waveHead[4] = (Byte)(totalDatalength & 0xff);
-    waveHead[5] = (Byte)((totalDatalength >> 8) & 0xff);
-    waveHead[6] = (Byte)((totalDatalength >> 16) & 0xff);
-    waveHead[7] = (Byte)((totalDatalength >> 24) & 0xff);
-    
-    waveHead[8] = 'W';
-    waveHead[9] = 'A';
-    waveHead[10] = 'V';
-    waveHead[11] = 'E';
-    
-    waveHead[12] = 'f';
-    waveHead[13] = 'm';
-    waveHead[14] = 't';
-    waveHead[15] = ' ';
-    
-    waveHead[16] = 16;  //size of 'fmt '
-    waveHead[17] = 0;
-    waveHead[18] = 0;
-    waveHead[19] = 0;
-    
-    waveHead[20] = 1;   //format
-    waveHead[21] = 0;
-    
-    waveHead[22] = 1;   //chanel
-    waveHead[23] = 0;
-    
-    waveHead[24] = (Byte)(sampleRate & 0xff);
-    waveHead[25] = (Byte)((sampleRate >> 8) & 0xff);
-    waveHead[26] = (Byte)((sampleRate >> 16) & 0xff);
-    waveHead[27] = (Byte)((sampleRate >> 24) & 0xff);
-    
-    long byteRate = sampleRate * 2 * (16 >> 3);;
-    waveHead[28] = (Byte)(byteRate & 0xff);
-    waveHead[29] = (Byte)((byteRate >> 8) & 0xff);
-    waveHead[30] = (Byte)((byteRate >> 16) & 0xff);
-    waveHead[31] = (Byte)((byteRate >> 24) & 0xff);
-    
-    waveHead[32] = 2*(16 >> 3);
-    waveHead[33] = 0;
-    
-    waveHead[34] = 16;
-    waveHead[35] = 0;
-    
-    waveHead[36] = 'd';
-    waveHead[37] = 'a';
-    waveHead[38] = 't';
-    waveHead[39] = 'a';
-    
-    long totalAudiolength = [audioData length];
-    
-    waveHead[40] = (Byte)(totalAudiolength & 0xff);
-    waveHead[41] = (Byte)((totalAudiolength >> 8) & 0xff);
-    waveHead[42] = (Byte)((totalAudiolength >> 16) & 0xff);
-    waveHead[43] = (Byte)((totalAudiolength >> 24) & 0xff);
-    
-    NSData *data = [NSData dataWithBytes:&waveHead  length:sizeof(waveHead)];
-    [self.stream write:[data bytes] maxLength:data.length];
+    float channelAvg = 0;
+    UInt32 dataSize = sizeof(AudioQueueLevelMeterState);
+    AudioQueueLevelMeterState *levelMeter = (AudioQueueLevelMeterState *)malloc(dataSize);
+    OSStatus status = AudioQueueGetProperty(aqData.mQueue, kAudioQueueProperty_CurrentLevelMeter, levelMeter, &dataSize);
+    if (status != noErr)
+    {
+        NSLog(@"peakPowerMeter error %d", status);
+        return 0;
+    }
+    for (int i = 0; i < dataSize; i++)
+    {
+        channelAvg += levelMeter[i].mPeakPower;  //取个平均值
+    }
+    NSLog(@"getCurrentAudioPower %.2f", channelAvg);
+    free(levelMeter);
+    return channelAvg;
 }
 
 @end

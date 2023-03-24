@@ -9,7 +9,7 @@
 #import "AQRecorder.h"
 #import "AQPlayer.h"
 #import "SCSiriWaveformView.h"
-#import "DBAudioMicrophone.h"
+#import "AQRecorderPro.h"
 #import <mach/mach_time.h>
 
 double MachTimeToSecs(uint64_t time)
@@ -35,14 +35,15 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
  }
  */
 
-@interface ViewController ()<DBAudioMicrophoneDelegate>
+@interface ViewController ()
 
 @property(weak, nonatomic) IBOutlet SCSiriWaveformView *waveView;
+
 @property(nonatomic, strong) AQRecorder *recorder;
 @property(nonatomic, strong) AQPlayer *player;
 @property(nonatomic, strong) CADisplayLink *displaylink;
 
-@property(nonatomic, strong) DBAudioMicrophone *microphone;
+@property(nonatomic, strong) AQRecorderPro *microphone;
 @property(nonatomic,strong) NSOutputStream *stream;
 
 @end
@@ -66,18 +67,23 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
     
     // 定时器读取音频的分贝值
     _displaylink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateMeters)];
-    _displaylink.preferredFramesPerSecond = 1;
     [_displaylink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
     
-    self.microphone = [[DBAudioMicrophone alloc] initWithSampleRate:16000 numerOfChannel:1];
-    self.microphone.delegate = self;
-    NSString *filePath2 = [NSTemporaryDirectory() stringByAppendingPathComponent:@"microphone.caf"];
-    self.stream = [[NSOutputStream alloc] initToFileAtPath:filePath2 append:YES];
+    self.microphone = [[AQRecorderPro alloc] initAudioFilePath:filePath];
+    [self.microphone setMeteringEnabled:YES];
     
     // 分贝图
     [self.waveView setWaveColor:[UIColor redColor]];
     [self.waveView setPrimaryWaveLineWidth:3.0f];
     [self.waveView setSecondaryWaveLineWidth:1.0];
+    
+    __weak typeof (self) weakSelf = self;
+    
+//    [self.microphone setNormalizedValueBlock:^(double value) {
+//        dispatch_async(dispatch_get_main_queue(), ^{
+//            [weakSelf.waveView updateWithLevel:value];
+//        });
+//    }];
     
     kCodeTimeEnd;
 }
@@ -114,13 +120,9 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
     [self.microphone startRecord];
     [self.stream open];
 }
-- (IBAction)pauseRecord1:(id)sender
-{
-    [self.microphone pause];
-}
 - (IBAction)stopRecord1:(id)sender
 {
-    [self.microphone stop];
+    [self.microphone stopRecord];
     [self.stream close];
     self.stream = nil;
 }
@@ -134,12 +136,17 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
 - (void)updateMeters
 {
 //    CGFloat metersValue = [self.player getCurrentLevelMeter];
-    CGFloat metersValue = [self.recorder getCurrentLevelMeter];
-    NSLog(@"metersValue -> %f", metersValue);
-    CGFloat value = metersValue/100;
-    CGFloat normalizedValue = [self normalizedPowerLevelFromDecibels:metersValue];
-    NSLog(@"normalizedValue -> %f", value);
-    [self.waveView updateWithLevel:metersValue];
+//    CGFloat metersValue = [self.recorder getCurrentAudioPower];
+    CGFloat metersValue = [self.microphone  peakPowerMeter];
+    if (metersValue > 1 || isnan(metersValue)) {
+        metersValue = 1;
+    }
+    
+    NSLog(@"metersValue -> %f", metersValue * 0.1);
+    __weak typeof (self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf.waveView updateWithLevel:metersValue * 0.1];
+    });
 }
 
 - (CGFloat)normalizedPowerLevelFromDecibels:(CGFloat)decibels
@@ -149,39 +156,6 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
     }
     CGFloat value = powf((powf(10.0f, 0.05f * decibels) - powf(10.0f, 0.05f * -60.0f)) * (1.0f / (1.0f - powf(10.0f, 0.05f * -60.0f))), 1.0f / 2.0f);
     return value;
-}
-
-// MARK: DBAudioMicrophoneDelegate
-- (void)audioMicrophone:(DBAudioMicrophone *)microphone hasAudioPCMByte:(Byte *)pcmByte audioByteSize:(UInt32)byteSize
-{
-    NSData *data = [NSData dataWithBytes:pcmByte length:byteSize];
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        [self writeWaveHead:data sampleRate:44100];
-    });
-    [self.stream write:[data bytes] maxLength:data.length];
-}
-
-- (void)audioCallBackVoiceGrade:(NSInteger)grade
-{
-    dispatch_async(dispatch_get_main_queue(), ^{
-        NSLog(@"dbValue:%@",@(grade));
-        
-        NSUInteger volumeDB = grade;
-        static NSInteger index = 0;
-        index++;
-        if (index == 1) {
-            index = 0;
-        }else {
-            return;
-        }
-        
-        CGFloat normalizedValue = [self normalizedPowerLevelFromDecibels:volumeDB];
-        NSLog(@"normalizedValue:%@",@(normalizedValue));
-        [self.waveView updateWithLevel:volumeDB/100];
-        
-    });
-
 }
 
 - (void)writeWaveHead:(NSData *)audioData sampleRate:(long)sampleRate

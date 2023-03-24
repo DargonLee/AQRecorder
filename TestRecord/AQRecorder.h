@@ -16,8 +16,6 @@ typedef NS_ENUM(NSInteger, AudioFormatType)
 };
 
 @interface AQRecorder : NSObject
-/// 当前录音的分贝值
-@property (nonatomic, copy) void(^normalizedValueBlock)(CGFloat value);
 /// 是否正在录制
 @property(nonatomic, assign, readonly) BOOL isRecording;
 
@@ -30,10 +28,6 @@ typedef NS_ENUM(NSInteger, AudioFormatType)
 - (void)pauseRecord;
 
 - (void)stopRecord;
-
-- (CGFloat)getCurrentLevelMeter;
-
-- (float)getCurrentAudioPower;
 
 @end
 

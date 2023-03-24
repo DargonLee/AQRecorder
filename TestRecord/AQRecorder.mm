@@ -44,23 +44,7 @@ static void HandleInputBuffer (
         pAqData->mDataFormat.mBytesPerPacket != 0) {
         inNumPackets = inBuffer->mAudioDataByteSize / pAqData->mDataFormat.mBytesPerPacket;
     }
-    
-    NSData *pcmData = [NSData dataWithBytes:inBuffer->mAudioData length:inBuffer->mAudioDataByteSize];
-    long pcmAllLenght = 0;
-    short butterByte[pcmData.length/2];
-    memcpy(butterByte, pcmData.bytes, pcmData.length);//frame_size * sizeof(short)
-    // 将 buffer 内容取出，进行平方和运算
-    for(int i =0; i < pcmData.length/2; i++)
-    {
-        pcmAllLenght += butterByte[i] * butterByte[i];
-    }
-    double mean = pcmAllLenght / (double)pcmData.length;
-    double volume = 10 * log10(mean);
-    NSLog(@"分贝大小 %@", @(volume));
-    pAqData->mLevelMeter = volume;
-    // free(&butterByte);
-    // SELF.normalizedValueBlock(volume);
-    
+ 
     // 3、将音频队列缓冲区写入磁盘
     // 要写入音频文件的新音频数据
     void *const audioBuffer = inBuffer->mAudioData;
@@ -296,58 +280,6 @@ OSStatus SetMagicCookieForFile (AudioQueueRef inQueue, AudioFileID inFile)
     AudioQueueDispose(aqData.mQueue, true);
     AudioFileClose(aqData.mAudioFile);
     
-}
-
-- (CGFloat)getCurrentLevelMeter
-{
-    return aqData.mLevelMeter;
-//    if (aqData.mQueue == nil)
-//    {
-//        NSLog(@"aqData.mQueue error");
-//        return 0;
-//    }
-//
-//    UInt32 dataSize = sizeof(AudioQueueLevelMeterState) * aqData.mDataFormat.mChannelsPerFrame;
-//    AudioQueueLevelMeterState *levels = (AudioQueueLevelMeterState*)malloc(dataSize);
-//    OSStatus rc = AudioQueueGetProperty(aqData.mQueue, kAudioQueueProperty_CurrentLevelMeterDB, levels, &dataSize);
-//    if (rc != noErr)
-//    {
-//        NSLog(@"AudioQueueGetProperty error");
-//        return 0;
-//    }
-//    Float32 meterValue = levels->mAveragePower;
-//    NSLog(@"%f", meterValue);
-//    return meterValue;
-//
-//    CGFloat channelAvg = 0;
-//    for (int i = 0; i < dataSize; i++)
-//    {
-//        channelAvg += levels[i].mAveragePower;
-//    }
-//    free(levels);
-//
-//    return channelAvg ;
-}
-
-
-// 音量大小
-- (float)getCurrentAudioPower
-{
-    float channelAvg = 0;
-    UInt32 dataSize = sizeof(AudioQueueLevelMeterState) * aqData.mDataFormat.mChannelsPerFrame;
-    AudioQueueLevelMeterState *levelMeter = (AudioQueueLevelMeterState *)malloc(dataSize);
-    // kAudioQueueProperty_EnableLevelMetering的getter
-    OSStatus status = AudioQueueGetProperty(aqData.mQueue, kAudioQueueProperty_CurrentLevelMeter, levelMeter, &dataSize);
-    if (status == noErr)
-    {
-        for (int i = 0; i < dataSize; i++)
-        {
-            channelAvg += levelMeter[i].mPeakPower;  //取个平均值
-        }
-    }
-    NSLog(@"getCurrentAudioPower %.2f", channelAvg);
-    free(levelMeter);
-    return channelAvg;
 }
 
 - (void)dealloc

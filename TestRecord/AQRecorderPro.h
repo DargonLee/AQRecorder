@@ -25,7 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)stopRecord;
 
-- (float)peakPowerMeter;
+- (float)mPeakPowerValue;
 
 @end
 

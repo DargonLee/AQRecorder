@@ -24,16 +24,7 @@ double MachTimeToSecs(uint64_t time)
 
 #define kCodeTimeEnd uint64_t end = mach_absolute_time(); \
 NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
-/*
- - (void)profileDoSomething
- {
-     uint64_t begin = mach_absolute_time();
-     [self doSomething];
-     uint64_t end = mach_absolute_time();
-     NSLog(@"Time taken to doSomething %g s",
-     MachTimeToSecs(end - begin));
- }
- */
+
 
 @interface ViewController ()
 
@@ -57,7 +48,7 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
     kCodeTimeBegin;
     // Do any additional setup after loading the view.
     NSString *filePath = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%.0f.%@", [NSDate timeIntervalSinceReferenceDate] * 1000.0, @"caf"]];
-    NSLog(@"----- %@", filePath);
+    NSLog(@"-----> %@", filePath);
     // 录音
     self.recorder = [[AQRecorder alloc] initAudioFilePath:filePath audioFormatType:AudioFormatLinearPCM];
     
@@ -67,6 +58,7 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
     
     // 定时器读取音频的分贝值
     _displaylink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateMeters)];
+//    _displaylink.preferredFramesPerSecond = 1;
     [_displaylink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
     
     self.microphone = [[AQRecorderPro alloc] initAudioFilePath:filePath];
@@ -76,14 +68,6 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
     [self.waveView setWaveColor:[UIColor redColor]];
     [self.waveView setPrimaryWaveLineWidth:3.0f];
     [self.waveView setSecondaryWaveLineWidth:1.0];
-    
-    __weak typeof (self) weakSelf = self;
-    
-//    [self.microphone setNormalizedValueBlock:^(double value) {
-//        dispatch_async(dispatch_get_main_queue(), ^{
-//            [weakSelf.waveView updateWithLevel:value];
-//        });
-//    }];
     
     kCodeTimeEnd;
 }
@@ -136,16 +120,14 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
 - (void)updateMeters
 {
 //    CGFloat metersValue = [self.player getCurrentLevelMeter];
-//    CGFloat metersValue = [self.recorder getCurrentAudioPower];
-    CGFloat metersValue = [self.microphone  peakPowerMeter];
+    CGFloat metersValue = [self.microphone  mPeakPowerValue];
     if (metersValue > 1 || isnan(metersValue)) {
         metersValue = 1;
     }
     
-    NSLog(@"metersValue -> %f", metersValue * 0.1);
     __weak typeof (self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        [weakSelf.waveView updateWithLevel:metersValue * 0.1];
+        [weakSelf.waveView updateWithLevel:metersValue];
     });
 }
 

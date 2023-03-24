@@ -262,39 +262,44 @@ void SetDeriveBufferSize(AudioQueueRef audioQueue,
     {
         return ;
     }
-    long pcmAllLenght = 0;
-    short butterByte[pcmData.length/2];
-    memcpy(butterByte, pcmData.bytes, pcmData.length);
     
-    // 将 buffer 内容取出，进行平方和运算
-    for(int i = 0; i < pcmData.length / 2; i++)
+    if (self.currentLevelMeterDBValueBlock)
     {
-        pcmAllLenght += butterByte[i] * butterByte[i];
+        long pcmAllLenght = 0;
+        short butterByte[pcmData.length/2];
+        memcpy(butterByte, pcmData.bytes, pcmData.length);
+        
+        // 将 buffer 内容取出，进行平方和运算
+        for(int i = 0; i < pcmData.length / 2; i++)
+        {
+            pcmAllLenght += butterByte[i] * butterByte[i];
+        }
+        double mean = pcmAllLenght / (double)pcmData.length;
+        double volume = 10 * log10(mean);
+        NSLog(@"分贝大小 %@", @(volume));
+        self.currentLevelMeterDBValueBlock(volume);
     }
-    double mean = pcmAllLenght / (double)pcmData.length;
-    double volume = 10 * log10(mean);
-    NSLog(@"分贝大小 %@", @(volume));
-    
-    !self.currentLevelMeterDBValueBlock ? nil : self.currentLevelMeterDBValueBlock(volume);
 }
 
-- (float)peakPowerMeter
+- (float)mPeakPowerValue
 {
     float channelAvg = 0;
-    UInt32 dataSize = sizeof(AudioQueueLevelMeterState);
-    AudioQueueLevelMeterState *levelMeter = (AudioQueueLevelMeterState *)malloc(dataSize);
-    OSStatus status = AudioQueueGetProperty(aqData.mQueue, kAudioQueueProperty_CurrentLevelMeter, levelMeter, &dataSize);
+    int channelNumber = 0;
+    UInt32 dataSize = sizeof(AudioQueueLevelMeterState) * aqData.mDataFormat.mChannelsPerFrame;
+    AudioQueueLevelMeterState *levelMeters = (AudioQueueLevelMeterState *)malloc(dataSize);
+    OSStatus status = AudioQueueGetProperty(aqData.mQueue, kAudioQueueProperty_CurrentLevelMeter, levelMeters, &dataSize);
     if (status != noErr)
     {
         NSLog(@"peakPowerMeter error %d", status);
         return 0;
     }
-    for (int i = 0; i < dataSize; i++)
-    {
-        channelAvg += levelMeter[i].mPeakPower;  //取个平均值
-    }
+    channelAvg = levelMeters[channelNumber].mPeakPower;
+//    for (int i = 0; i < dataSize; i++)
+//    {
+//        channelAvg += levelMeters[i].mAveragePower;  //取个平均值
+//    }
     NSLog(@"getCurrentAudioPower %.2f", channelAvg);
-    free(levelMeter);
+    free(levelMeters);
     return channelAvg;
 }
 

@@ -281,10 +281,9 @@ void SetDeriveBufferSize(AudioQueueRef audioQueue,
     }
 }
 
-- (float)mPeakPowerValue
+- (float)averagePowerForChannel:(NSUInteger)channelNumber
 {
     float channelAvg = 0;
-    int channelNumber = 0;
     UInt32 dataSize = sizeof(AudioQueueLevelMeterState) * aqData.mDataFormat.mChannelsPerFrame;
     AudioQueueLevelMeterState *levelMeters = (AudioQueueLevelMeterState *)malloc(dataSize);
     OSStatus status = AudioQueueGetProperty(aqData.mQueue, kAudioQueueProperty_CurrentLevelMeter, levelMeters, &dataSize);
@@ -301,6 +300,11 @@ void SetDeriveBufferSize(AudioQueueRef audioQueue,
     NSLog(@"getCurrentAudioPower %.2f", channelAvg);
     free(levelMeters);
     return channelAvg;
+}
+
+- (float)mPeakPowerValue
+{
+    return [self averagePowerForChannel:0];
 }
 
 @end

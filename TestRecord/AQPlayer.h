@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) void (^normalizedValueBlock)(CGFloat value);
 /// 是否正在播放
 @property(nonatomic, assign, readonly) BOOL isPlaying;
+@property(nonatomic, getter=isMeteringEnabled) BOOL meteringEnabled;
 
 - (instancetype)initAudioFilePath:(NSString *_Nonnull)path;
 
@@ -23,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)stopPlayer;
 
-- (CGFloat)getCurrentLevelMeter;
+- (float)mPeakPowerValue;
 
 @end
 

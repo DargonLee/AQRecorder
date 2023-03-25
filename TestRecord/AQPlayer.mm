@@ -23,6 +23,7 @@ typedef struct AQPlayerState {
     UInt32                        mNumPacketsToRead;
     AudioStreamPacketDescription  *mPacketDescs;
     bool                          mIsRunning;
+    UInt32                        mEnableLevelMetering;
 } AQPlayerState;
 
 // 2、编写播放音频队列回调
@@ -220,6 +221,13 @@ OSStatus SetMagicCookieForFileRead (AudioQueueRef inQueue, AudioFileID inFile)
         &propertySize,
         &maxPacketSize
     );
+    
+    // 开启Metering
+    UInt32 size = sizeof(aqData.mEnableLevelMetering);
+    OSStatus status = AudioQueueSetProperty(aqData.mQueue, kAudioQueueProperty_EnableLevelMetering, &aqData.mEnableLevelMetering, size);
+    if (status != noErr) {
+        NSLog(@"开启Metering失败");
+    }
      
     DeriveBufferSize (
         aqData.mDataFormat,
@@ -267,6 +275,16 @@ OSStatus SetMagicCookieForFileRead (AudioQueueRef inQueue, AudioFileID inFile)
     }
     
     return YES;
+}
+
+- (void)setMeteringEnabled:(BOOL)meteringEnabled
+{
+    aqData.mEnableLevelMetering = meteringEnabled == YES ? 1 : 0;
+}
+- (BOOL)isMeteringEnabled
+{
+    BOOL result = aqData.mEnableLevelMetering == 1 ? YES : NO;
+    return result;
 }
 
 - (BOOL)isPlaying
@@ -323,24 +341,30 @@ OSStatus SetMagicCookieForFileRead (AudioQueueRef inQueue, AudioFileID inFile)
     free (aqData.mPacketDescs);
 }
 
-- (CGFloat)getCurrentLevelMeter
+- (float)averagePowerForChannel:(NSUInteger)channelNumber
 {
+    float channelAvg = 0;
     UInt32 dataSize = sizeof(AudioQueueLevelMeterState) * aqData.mDataFormat.mChannelsPerFrame;
-    AudioQueueLevelMeterState *levels = (AudioQueueLevelMeterState*)malloc(dataSize);
-    OSStatus rc = AudioQueueGetProperty(aqData.mQueue, kAudioQueueProperty_CurrentLevelMeterDB, levels, &dataSize);
-    if (rc)
+    AudioQueueLevelMeterState *levelMeters = (AudioQueueLevelMeterState *)malloc(dataSize);
+    OSStatus status = AudioQueueGetProperty(aqData.mQueue, kAudioQueueProperty_CurrentLevelMeter, levelMeters, &dataSize);
+    if (status != noErr)
     {
-        NSLog(@"NoiseLeveMeter>>takeSample %d", rc);
+        NSLog(@"peakPowerMeter error %d", status);
+        return 0;
     }
-    
-    CGFloat channelAvg = 0;
-    for (int i = 0; i < dataSize; i++)
-    {
-        channelAvg += levels[i].mAveragePower;
-    }
-    free(levels);
-    
+    channelAvg = levelMeters[channelNumber].mPeakPower;
+//    for (int i = 0; i < dataSize; i++)
+//    {
+//        channelAvg += levelMeters[i].mAveragePower;  //取个平均值
+//    }
+    NSLog(@"getCurrentAudioPower %.2f", channelAvg);
+    free(levelMeters);
     return channelAvg;
+}
+
+- (float)mPeakPowerValue
+{
+    return [self averagePowerForChannel:0];
 }
 
 @end

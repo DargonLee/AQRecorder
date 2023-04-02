@@ -35,11 +35,30 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
 @property(nonatomic, strong) CADisplayLink *displaylink;
 
 @property(nonatomic, strong) AQRecorderPro *microphone;
-@property(nonatomic,strong) NSOutputStream *stream;
+@property(nonatomic, strong) NSOutputStream *stream;
+@property(nonatomic, strong) NSFileHandle *fileHandle;
+@property(nonatomic, strong) NSString *filePath;
+@property(nonatomic, strong) NSString *streamFilePath;
 
 @end
 
 @implementation ViewController
+
+- (NSFileHandle *)fileHandle
+{
+    if (_fileHandle == nil) {
+        _fileHandle = [NSFileHandle fileHandleForReadingAtPath:self.filePath];
+    }
+    return _fileHandle;
+}
+
+- (NSOutputStream *)stream
+{
+    if (_stream == nil) {
+        self.stream = [[NSOutputStream alloc] initToFileAtPath:self.streamFilePath append:YES];
+    }
+    return _stream;
+}
 
 - (void)viewDidLoad
 {
@@ -47,22 +66,24 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
     
     kCodeTimeBegin;
     // Do any additional setup after loading the view.
-    NSString *filePath = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%.0f.%@", [NSDate timeIntervalSinceReferenceDate] * 1000.0, @"caf"]];
-    NSLog(@"-----> %@", filePath);
+    self.filePath = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%.0f.%@", [NSDate timeIntervalSinceReferenceDate] * 1000.0, @"caf"]];
+    self.streamFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%.0f.stream.%@", [NSDate timeIntervalSinceReferenceDate] * 1000.0, @"caf"]];
+    NSLog(@"-----> %@", self.filePath);
     // 录音
-    self.recorder = [[AQRecorder alloc] initAudioFilePath:filePath audioFormatType:AudioFormatLinearPCM];
+    self.recorder = [[AQRecorder alloc] initAudioFilePath:self.filePath audioFormatType:AudioFormatLinearPCM];
     
     // 播放
     NSString *filePath1 = [NSTemporaryDirectory() stringByAppendingPathComponent:@"701100889296.caf"];
     self.player = [[AQPlayer alloc] initAudioFilePath:filePath1];
     
-    // 定时器读取音频的分贝值
-    _displaylink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateMeters)];
-//    _displaylink.preferredFramesPerSecond = 1;
-    [_displaylink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
-    
-    self.microphone = [[AQRecorderPro alloc] initAudioFilePath:filePath];
+    // 录音Pro
+    self.microphone = [[AQRecorderPro alloc] initAudioFilePath:self.filePath];
     [self.microphone setMeteringEnabled:YES];
+    
+        
+    // 定时器读取音频的分贝值
+//    _displaylink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateMeters)];
+//    [_displaylink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
     
     // 分贝图
     [self.waveView setWaveColor:[UIColor redColor]];
@@ -102,13 +123,41 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
 - (IBAction)startRecord1:(id)sender
 {
     [self.microphone startRecord];
-    [self.stream open];
+    
+    // FileHandle
+    [self fileHandleReading];
 }
 - (IBAction)stopRecord1:(id)sender
 {
     [self.microphone stopRecord];
+    
+    // FileHandle
+    [self fileHandleClose];
+}
+
+- (void)fileHandleClose
+{
     [self.stream close];
     self.stream = nil;
+    self.fileHandle = nil;
+}
+- (void)fileHandleReading
+{
+    [self.stream open];
+    
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        while (true) {
+            if (self.stream == nil) {
+                break;
+            }
+            NSData *data = [self.fileHandle readDataToEndOfFile];
+            NSInteger lengthSet = [self.fileHandle offsetInFile];
+            if (data.length) {
+                NSLog(@"readData => %@ -- %ld", data, lengthSet);
+                [self.stream write:data.bytes maxLength:data.length];
+            }
+        }
+    });
 }
 
 - (void)cleanDisplaylink

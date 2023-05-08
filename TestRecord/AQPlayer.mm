@@ -32,7 +32,7 @@ static void HandleOutputBuffer (
                                 AudioQueueRef        inAQ,
                                 AudioQueueBufferRef  inBuffer
                                 ) {
-    // NSLog(@"----->音频队列回调");
+    NSLog(@"----->音频队列回调");
     AQPlayerState *pAqData = (AQPlayerState *) aqData;
     if (pAqData->mIsRunning == 0) {
         NSLog(@"------> mIsRunning error");
@@ -305,20 +305,7 @@ OSStatus SetMagicCookieForFileRead (AudioQueueRef inQueue, AudioFileID inFile)
         aqData.mQueue,
         NULL
     );
-     
-    do {
-        CFRunLoopRunInMode (
-            kCFRunLoopDefaultMode,
-            0.25,
-            false
-        );
-    } while (aqData.mIsRunning);
-     
-    CFRunLoopRunInMode (
-        kCFRunLoopDefaultMode,
-        1,
-        false
-    );
+
 }
 
 - (void)pausePlayer

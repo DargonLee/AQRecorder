@@ -73,8 +73,9 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
     self.recorder = [[AQRecorder alloc] initAudioFilePath:self.filePath audioFormatType:AudioFormatLinearPCM];
     
     // 播放
-    NSString *filePath1 = [NSTemporaryDirectory() stringByAppendingPathComponent:@"701100889296.caf"];
-    self.player = [[AQPlayer alloc] initAudioFilePath:filePath1];
+    self.filePath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"iPhone.caf"];
+    self.streamFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"iPhone.stream.caf"];
+    self.player = [[AQPlayer alloc] initAudioFilePath:self.streamFilePath];
     
     // 录音Pro
     self.microphone = [[AQRecorderPro alloc] initAudioFilePath:self.filePath];
@@ -106,9 +107,31 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
     [self.recorder stopRecord];
     [self cleanDisplaylink];
 }
+
 - (IBAction)startPlay:(id)sender
 {
+    [self.stream open];
+    
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        while (true) {
+            [NSThread sleepForTimeInterval:1.0];
+            NSData *data = [self.fileHandle readDataOfLength:4096];
+            NSInteger lengthSet = [self.fileHandle offsetInFile];
+            if (data.length == 0) {
+                [self.stream close];
+                self.stream = nil;
+                self.fileHandle = nil;
+                break;
+            }
+            [self.fileHandle seekToFileOffset:lengthSet];
+            NSLog(@"readData => %@ -- %ld", data, lengthSet);
+            [self.stream write:data.bytes maxLength:data.length];
+            
+        }
+    });
+    
     [self.player startPlayer];
+    
 }
 - (IBAction)pausePlay:(id)sender
 {
@@ -120,6 +143,7 @@ NSLog(@"Time taken to doSomething %g s", MachTimeToSecs(end - begin));
     
     [self cleanDisplaylink];
 }
+
 - (IBAction)startRecord1:(id)sender
 {
     [self.microphone startRecord];
